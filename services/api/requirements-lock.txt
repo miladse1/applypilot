@@ -42,7 +42,7 @@ psycopg-binary==3.3.6
 pydantic==2.14.0
 pydantic-settings==2.15.0
 pydantic_core==2.50.0
-pyee==14.0.0
+pyee==16.0.1
 Pygments==2.21.0
 pymupdf==1.28.2
 pypdf==6.21.4
