@@ -1,0 +1,83 @@
+# ---------------------------------------------------------------------------
+# Private data lives outside this repository:
+#   ~/Library/Application Support/ApplyPilot   database, resumes, browser profile, logs, .env
+# These rules are a second line of defence. .githooks/guard.sh is the third.
+# ---------------------------------------------------------------------------
+
+# Secrets and credentials
+.env
+.env.*
+*.env
+!.env.example
+*.pem
+*.key
+*.p12
+credentials*.json
+secrets*.json
+
+# Databases, dumps, backups, archives
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+*.dump
+*.bak
+backups/
+backup/
+*.tgz
+*.tar
+*.tar.gz
+*.zip
+
+# Runtime data (normally in the data folder; ignored here in case an old path is used)
+storage/
+browser-profile/
+.logs/
+logs/
+*.log
+
+# Personal documents (resumes, cover letters). Fictional fixtures live in services/api/tests/fixtures.
+*.pdf
+*.docx
+*.doc
+!services/api/tests/fixtures/**/*.pdf
+!services/api/tests/fixtures/**/*.docx
+
+# Python
+.venv/
+.venv.*/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node / Next.js
+node_modules/
+.next/
+.next-prod/
+.next-prod.prev/
+.next-*/
+.run/
+out/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# Test and browser-automation output
+playwright-report/
+test-results/
+blob-report/
+.playwright-cli/
+
+# OS and editors
+.DS_Store
+.idea/
+.vscode/
+*.swp

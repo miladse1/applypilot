@@ -1,0 +1,12 @@
+---
+description: Security rules for ApplyPilot (always on)
+alwaysApply: true
+---
+
+Follow AGENTS.md in the repository root. The short version:
+
+- Never open, print, or copy `.env` files or anything in `~/Library/Application Support/ApplyPilot` (secrets, database, resumes, browser profile, logs).
+- Tests, fixtures, docs, and screenshots use fictional data only.
+- API keys are read only by `services/api`. Never put a secret in `apps/web` or in a `NEXT_PUBLIC_` variable.
+- Never render third-party HTML with `innerHTML` or `dangerouslySetInnerHTML`.
+- Never commit, push, change GitHub settings, or rewrite history without the user's explicit approval. Never use `--no-verify`.

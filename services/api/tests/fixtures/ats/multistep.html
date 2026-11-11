@@ -1,0 +1,32 @@
+<!doctype html><html><body><div id="app"></div>
+<script>
+// An unusual employer site: the form is behind a plain link, Next is "Proceed ›", answers are validated,
+// a cover letter is required, and the last button says "Send my application".
+const state = {step: 'intro', data: {}, rejected: 0};
+function render(){
+  const app = document.getElementById('app');
+  if (state.step === 'intro') app.innerHTML = `<h1>Junior Developer</h1><p>Read about our hiring process below, then continue.</p>
+    <a href="#" onclick="return false;">Our values</a> <a href="#" onclick="state.step='form';render();return false;">Continue to the online form ›</a> <a href="#">Sign in with Google</a>`;
+  if (state.step === 'form') app.innerHTML = `<form onsubmit="return false;">
+    <div><label for="name">Full name*</label><input id="name" required></div>
+    <div><label for="email">Email*</label><input id="email" required></div>
+    <div><label for="years">How many years of programming experience do you have?*</label><input id="years" required><div id="years-error"></div></div>
+    <div><div>Resume*</div><label for="resume">Upload</label><input type="file" id="resume" required style="display:none"></div>
+    <div><div>Cover letter*</div><label for="cover">Upload</label><input type="file" id="cover" required style="display:none"></div>
+    <a href="#" role="button" onclick="proceed();return false;">Proceed ›</a></form>`;
+  if (state.step === 'review') app.innerHTML = `<h2>Check your details</h2><p>${state.data.name} · ${state.data.years} years</p><button onclick="state.step='done';render();">Send my application</button>`;
+  if (state.step === 'done') app.innerHTML = `<h2>Thank you for applying!</h2><p>Your application has been received.</p>`;
+}
+function proceed(){
+  const years = document.getElementById('years');
+  if (!/^\d+$/.test(years.value.trim())) {
+    state.rejected++;
+    years.setAttribute('aria-invalid', 'true');
+    document.getElementById('years-error').innerHTML = '<div role="alert">Please enter a whole number of years.</div>';
+    return;
+  }
+  state.data = {name: document.getElementById('name').value, years: years.value, resume: document.getElementById('resume').files[0]?.name, cover: document.getElementById('cover').files[0]?.name};
+  state.step = 'review'; render();
+}
+window.ms = state; render();
+</script></body></html>

@@ -1,0 +1,24 @@
+<!doctype html><html><body>
+<form id="f" onsubmit="event.preventDefault(); done();">
+  <div><label>Resume/CV ✱<input id="resume-upload-input" name="resume" type="file" style="opacity:0;position:absolute"></label></div>
+  <div><label>Full name ✱<input name="name" required></label></div>
+  <div><label>Email ✱<input name="email" type="email" required></label></div>
+  <div><label>Phone ✱<input name="phone" required></label></div>
+  <div><label>Current location ✱<input id="location-input" name="location" required></label></div>
+  <div><label>LinkedIn URL<input name="urls[LinkedIn]"></label></div>
+  <div><label>GitHub URL<input name="urls[GitHub]"></label></div>
+  <fieldset><legend>Are you legally eligible to work in Canada? ✱</legend>
+    <label><input type="radio" name="auth" value="yes" required>Yes</label><label><input type="radio" name="auth" value="no">No</label></fieldset>
+  <fieldset><legend>Veteran status</legend>
+    <label><input type="radio" name="vet" value="v">I am a veteran</label><label><input type="radio" name="vet" value="n">I am not a veteran</label><label><input type="radio" name="vet" value="d">Prefer not to disclose</label></fieldset>
+  <div><label>Additional information<textarea name="comments"></textarea></label></div>
+  <button id="btn-submit" type="submit">SUBMIT APPLICATION</button>
+</form>
+<script>
+function done(){
+  window.submitted = Object.fromEntries(new FormData(document.getElementById('f')).entries());
+  window.submitted.resume = document.getElementById('resume-upload-input').files[0]?.name || null;
+  history.pushState({}, '', location.pathname.replace('lever.html','') + 'thanks');
+  document.body.innerHTML = '<h2>Application submitted!</h2><p>Thanks for applying.</p>';
+}
+</script></body></html>

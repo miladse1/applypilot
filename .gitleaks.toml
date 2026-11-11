@@ -1,0 +1,21 @@
+# gitleaks configuration: the default rule set plus rules for keys this project uses.
+# Used by .githooks/guard.sh (pre-commit, pre-push, scripts/security-check.sh) and CI.
+title = "ApplyPilot"
+
+[extend]
+useDefault = true
+
+# The default Anthropic rules only match the sk-ant-api03- and sk-ant-admin01- formats.
+# This one matches every sk-ant-<kind>- key, including user-scoped keys.
+[[rules]]
+id = "anthropic-api-key-any-format"
+description = "Anthropic API key"
+regex = '''\bsk-ant-[a-z]{2,12}[0-9]{0,3}-[A-Za-z0-9_\-]{32,}'''
+keywords = ["sk-ant-"]
+
+[[rules]]
+id = "smtp-password-assignment"
+description = "SMTP password in an env-style assignment"
+regex = '''(?i)\bSMTP_PASSWORD\s*=\s*['"]?([^\s'"#]{6,})'''
+secretGroup = 1
+keywords = ["smtp_password"]

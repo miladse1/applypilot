@@ -1,0 +1,29 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Experience York - Postings</title>
+<script>if (localStorage.getItem('york') !== 'in') location.replace('york-login.html');</script></head><body>
+<h2>Winter 2027 Co-op Jobs</h2>
+<table id="postingsTable"><thead><tr><th>Action</th><th>ID</th><th>Job Title</th><th>Organization</th><th>Location</th><th>App Deadline</th></tr></thead><tbody id="rows"></tbody></table>
+<div class="pagination" id="pager"></div>
+<script>
+const page = new URLSearchParams(location.search).get('page') || '1';
+const rows = {
+  '1': [
+    ['101', 'Software Developer Co-op', 'Maple Analytics', 'Toronto, ON', 'Jan 15, 2027 11:59 PM', 'same'],
+    ['102', 'Marketing Assistant', 'Brightside Media', 'Toronto, ON', 'Jan 20, 2027', 'same'],
+    ['103', 'Data Engineering Intern', 'Northwind Bank', 'Toronto, ON', 'Jan 22, 2027', 'tab'],
+  ],
+  '2': [
+    ['104', 'Machine Learning Co-op', 'Lakeshore AI', 'Remote', 'Feb 1, 2027', 'same'],
+    ['105', 'Civil Engineering Co-op - Site Inspection', 'BuildRight Construction', 'Vaughan, ON', 'Feb 3, 2027', 'same'],
+  ],
+}[page];
+const body = document.getElementById('rows');
+for (const [id, title, org, loc, deadline, how] of rows) {
+  const tr = document.createElement('tr');
+  const open = how === 'tab' ? `window.open('york-detail.html?p=${id}', '_blank')` : `location.href='york-detail.html?p=${id}'`;
+  tr.innerHTML = `<td><button onclick="localStorage.setItem('york-applied', '${id}')">Apply</button> <button onclick="localStorage.setItem('york-shortlist', '${id}')">Shortlist</button></td>
+    <td>${id}</td><td><a href="javascript:void(0)" onclick="${open}; return false;">${title}</a></td><td>${org}</td><td>${loc}</td><td>${deadline}</td>`;
+  body.append(tr);
+}
+document.getElementById('pager').innerHTML = page === '1' ? '<a href="york-list.html?page=1">1</a> <a href="york-list.html?page=2">2</a> <a href="york-list.html?page=2">»</a>' : '<a href="york-list.html?page=1">1</a> <a href="#">2</a>';
+</script>
+</body></html>

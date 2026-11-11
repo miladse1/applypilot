@@ -1,0 +1,18 @@
+<!doctype html><html><body><div id="root">
+  <div><label for="_systemfield_name">Name</label><input id="_systemfield_name" required></div>
+  <div><label for="_systemfield_email">Email</label><input id="_systemfield_email" type="email" required></div>
+  <div><label for="ph">Phone Number</label><input id="ph" type="tel" required></div>
+  <div><label for="_systemfield_resume">Resume</label><input id="_systemfield_resume" type="file" required style="display:none"><button type="button">Upload File</button></div>
+  <div><label>Are you currently located in Canada?*</label><div><button type="button" onclick="pick(this)">Yes</button><button type="button" onclick="pick(this)">No</button></div></div>
+  <div><label for="why">Why are you interested in this role? Please reference one specific thing about our product.*</label><textarea id="why" required></textarea></div>
+  <button type="button" id="submit" onclick="done()">Submit Application</button>
+</div>
+<script>
+let located = null;
+function pick(b){ located = b.innerText; for (const x of b.parentElement.children) x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }
+function done(){
+  if (!why.value.trim()) { document.getElementById('why').setAttribute('aria-invalid','true'); const e = document.createElement('div'); e.setAttribute('role','alert'); e.innerText = 'This field is required'; why.after(e); return; }
+  window.submitted = {name: _systemfield_name.value, email: _systemfield_email.value, phone: ph.value, located, why: why.value, resume: _systemfield_resume.files[0]?.name || null};
+  document.getElementById('root').innerHTML = '<h2>Thanks for applying!</h2><p>Your application was successfully submitted.</p>';
+}
+</script></body></html>

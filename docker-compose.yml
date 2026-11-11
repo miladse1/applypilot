@@ -1,0 +1,58 @@
+# Docker setup with PostgreSQL. Every port is published on this computer only (127.0.0.1),
+# never on the local network. Put POSTGRES_PASSWORD (and optional keys) in a .env file next to
+# this one; it is ignored by Git.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: applypilot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: applypilot
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U applypilot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./services/api
+    environment:
+      DATABASE_URL: postgresql+psycopg://applypilot:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/applypilot
+      APPLYPILOT_HOME: /data
+      DEMO_MODE: "true"
+      STORAGE_DIR: /data/storage
+      CORS_ORIGINS: http://localhost:3000
+      ALLOWED_HOSTS: localhost,127.0.0.1,api
+      JOB_BOARD_TOKENS: ""
+      AI_PROVIDER: auto
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-5-5}
+      AI_MONTHLY_LIMIT_USD: ${AI_MONTHLY_LIMIT_USD:-25.00}
+      ADZUNA_APP_ID: ${ADZUNA_APP_ID:-}
+      ADZUNA_APP_KEY: ${ADZUNA_APP_KEY:-}
+      ADZUNA_COUNTRY: ca
+      COOKIE_SECURE: "false"
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - uploads:/data/storage
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build: ./apps/web
+    environment:
+      API_URL: http://api:8000
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
+  uploads:

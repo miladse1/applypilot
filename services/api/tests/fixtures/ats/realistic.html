@@ -1,0 +1,71 @@
+<!doctype html>
+<html><head><title>Software Engineering Intern - Example Co</title>
+<style>.field{margin:10px 0} .hidden-file{position:absolute;opacity:0;width:1px;height:1px}</style></head>
+<body>
+<h1>Software Engineering Intern (Winter 2027)</h1>
+<p>Example Co builds payments infrastructure in Python, SQL, and React. Interns work on real services with mentorship.</p>
+<form id="application" onsubmit="event.preventDefault(); send();">
+  <!-- Greenhouse-style uploads: both buttons are labelled "Attach"; the heading says which document it is. -->
+  <div class="field" id="resume-group">
+    <div class="upload-label">Resume/CV<span>*</span></div>
+    <label for="resume">Attach</label><input class="hidden-file" type="file" id="resume" required onchange="record('resume', this)">
+  </div>
+  <div class="field" id="cover-group">
+    <div class="upload-label">Cover Letter</div>
+    <label for="cover_letter">Attach</label><input class="hidden-file" type="file" id="cover_letter" onchange="record('cover_letter', this)">
+  </div>
+  <div class="field"><label for="first_name">First Name*</label><input id="first_name" required></div>
+  <div class="field"><label for="last_name">Last Name*</label><input id="last_name" required></div>
+  <div class="field"><label for="email">Email*</label><input id="email" required></div>
+  <div class="field"><label for="phone">Phone</label><input id="phone"></div>
+  <div class="field"><label for="linkedin">LinkedIn Profile</label><input id="linkedin"></div>
+  <div class="field"><label for="school">Which school do you currently attend?*</label>
+    <select id="school" required><option value="">Select...</option><option>University of Toronto</option><option>York University</option><option>University of Waterloo</option><option>Other</option></select></div>
+  <div class="field"><label for="enrolled">Are you currently enrolled in a post-secondary program?*</label>
+    <select id="enrolled" required><option value="">Select...</option><option>Yes</option><option>No</option></select></div>
+  <div class="field"><label for="sql">Do you have experience working with SQL databases?*</label>
+    <select id="sql" required><option value="">Select...</option><option>Yes</option><option>No</option></select></div>
+  <fieldset class="field"><legend>Which programming languages are you proficient in?</legend>
+    <label><input type="checkbox" name="langs" value="Python">Python</label>
+    <label><input type="checkbox" name="langs" value="Java">Java</label>
+    <label><input type="checkbox" name="langs" value="C++">C++</label>
+    <label><input type="checkbox" name="langs" value="Go">Go</label>
+    <label><input type="checkbox" name="langs" value="JavaScript">JavaScript</label></fieldset>
+  <div class="field"><label for="project">Tell us about a technical project you're proud of.*</label><textarea id="project" maxlength="1000" required></textarea></div>
+  <div class="field"><label for="why">Why do you want to intern at Example Co?*</label><textarea id="why" required></textarea></div>
+  <div class="field"><label for="auth">Are you legally authorized to work in Canada?*</label>
+    <select id="auth" required><option value="">Select...</option><option>Yes</option><option>No</option></select></div>
+  <div class="field"><label for="sponsor">Will you now or in the future require visa sponsorship?*</label>
+    <select id="sponsor" required><option value="">Select...</option><option>Yes</option><option>No</option></select></div>
+  <div class="field"><label for="heard">How did you hear about this job?*</label>
+    <select id="heard" required><option value="">Select...</option><option>LinkedIn</option><option>Company website</option><option>Job board</option><option>Referral</option><option>Other</option></select></div>
+  <div class="field"><label for="address">Home address*</label><input id="address" required></div>
+  <div class="field"><label for="salary">What are your hourly pay expectations?</label><input id="salary"></div>
+  <div class="field"><label for="extra">Is there anything else you would like us to know?</label><textarea id="extra"></textarea></div>
+  <div class="field"><label for="gender">Gender</label><select id="gender"><option value="">Select...</option><option>Male</option><option>Female</option><option>Decline to self-identify</option></select></div>
+  <button type="submit">Submit application</button>
+</form>
+<script>
+window.uploads = {};
+async function record(slot, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  let binary = ''; for (const b of bytes) binary += String.fromCharCode(b);
+  window.uploads[slot] = {name: file.name, sha256: [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join(''), base64: btoa(binary)};
+  input.parentElement.insertAdjacentHTML('beforeend', `<span class="chip">${file.name}</span>`);
+}
+function send() {
+  const value = (id) => document.getElementById(id).value;
+  window.submitted = {
+    first: value('first_name'), last: value('last_name'), email: value('email'), linkedin: value('linkedin'), school: value('school'), enrolled: value('enrolled'),
+    sql: value('sql'), langs: [...document.querySelectorAll('input[name=langs]:checked')].map((x) => x.value), project: value('project'), why: value('why'),
+    auth: value('auth'), sponsor: value('sponsor'), heard: value('heard'), address: value('address'), salary: value('salary'), extra: value('extra'), gender: value('gender'),
+    uploads: Object.fromEntries(Object.entries(window.uploads).map(([k, v]) => [k, {name: v.name, sha256: v.sha256}])),
+  };
+  history.pushState({}, '', location.pathname.replace('realistic.html', '') + 'confirmation');
+  document.body.innerHTML = '<h1>Thank you for applying!</h1><p>Your application has been submitted.</p>';
+}
+</script>
+</body></html>

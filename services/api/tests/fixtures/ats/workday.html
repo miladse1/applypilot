@@ -1,0 +1,70 @@
+<!doctype html><html><body>
+<div id="app"></div>
+<script>
+// A small stand-in for Workday's candidate flow, using its data-automation-id conventions.
+const params = new URLSearchParams(location.search);
+// Accounts that already exist (?account=email:password), whether new accounts need email verification, and slow loading.
+const accounts = Object.fromEntries((params.get('account') ? [params.get('account').split(':')] : []));
+const state = {step: 'job', signedIn: false, data: {}, attempts: 0, created: null, consent: false, verified: params.get('verify') !== '1'};
+function enterSite(){ if (params.get('slow') === '1') { document.getElementById('app').innerHTML = '<div class="loading">Loading…</div>'; setTimeout(() => { state.step = 'info'; render(); }, 2500); } else { state.step = 'info'; render(); } }
+function render(){
+  const app = document.getElementById('app');
+  if (state.step === 'job') app.innerHTML = `<button data-automation-id="legalNoticeDeclineButton" onclick="this.remove()">Decline</button><h2 data-automation-id="jobPostingHeader">Developer</h2><a role="button" data-automation-id="adventureButton" href="#" onclick="state.step='start';render();return false;">Apply</a>`;
+  if (state.step === 'start') app.innerHTML = `<div role="dialog"><a role="button" data-automation-id="autofillWithResume" href="#">Autofill with Resume</a><a role="button" data-automation-id="applyManually" href="#" onclick="state.step=state.signedIn?'info':'create';render();return false;">Apply Manually</a></div>`;
+  if (state.step === 'create') app.innerHTML = `<form><h2>Create Account</h2><label for="e">Email Address*</label><input id="e" data-automation-id="email"><label for="p">Password*</label><input id="p" type="password" data-automation-id="password">
+    <label for="v">Verify New Password*</label><input id="v" type="password" data-automation-id="verifyPassword">
+    <input type="checkbox" id="c" data-automation-id="createAccountCheckbox"><label for="c">Yes, I have read and consent to the terms and conditions</label>
+    <label for="hp">Enter website. This input is for robots only, do not enter if you're human.</label><input id="hp" name="website" data-automation-id="beecatcher">
+    <div id="err"></div><button type="button" data-automation-id="createAccountSubmitButton" onclick="createAccount()">Create Account</button>
+    <button type="button" data-automation-id="signInLink" onclick="state.step='signin';render();">Sign In</button></form>`;
+  if (state.step === 'signin') app.innerHTML = `<form data-automation-id="signInFormo"><h2>Sign In</h2><label for="e">Email Address*</label><input id="e" data-automation-id="email"><label for="p">Password*</label><input id="p" type="password" data-automation-id="password"><label for="hp">Enter website. This input is for robots only, do not enter if you're human.</label><input id="hp" name="website" data-automation-id="beecatcher">
+    <div id="err"></div><button type="button" data-automation-id="signInSubmitButton" onclick="signIn()">Sign In</button>
+    <button type="button" data-automation-id="createAccountLink" onclick="state.step='create';render();">Create Account</button></form>`;
+  if (state.step === 'verify') app.innerHTML = `<h2>Verify your account</h2><p>We sent a verification email to ${state.created}. Please verify your email to continue.</p>`;
+  if (state.step === 'info') app.innerHTML = `<ol data-automation-id="progressBar"><li>My Information</li></ol>
+    <div data-automation-id="formField-country"><label id="cl">Country*</label><button aria-haspopup="listbox" aria-labelledby="cl" id="country" onclick="openList(this, ['Canada','United States'])">Select One</button></div>
+    <div data-automation-id="formField-legalNameSection_firstName"><label for="fn">Given Name(s)*</label><input id="fn" data-automation-id="legalNameSection_firstName" aria-required="true"></div>
+    <div data-automation-id="formField-legalNameSection_lastName"><label for="ln">Family Name*</label><input id="ln" data-automation-id="legalNameSection_lastName" aria-required="true"></div>
+    <div data-automation-id="formField-phone-number"><label for="pn">Phone Number*</label><input id="pn" data-automation-id="phone-number" aria-required="true"></div>
+    <div data-automation-id="formField-phone-extension"><label for="px">Phone Extension</label><input id="px" data-automation-id="phone-extension"></div>
+    <div data-automation-id="formField-preferredCheck"><label>First Name*</label><input type="checkbox" id="pref"><label for="pref">I have a preferred name</label></div>
+    <div data-automation-id="formField-previousWorker"><fieldset><legend>Have you previously been employed by Example Bank?*</legend><label><input type="radio" name="pw" value="Yes">Yes</label><label><input type="radio" name="pw" value="No">No</label></fieldset></div>
+    <button data-automation-id="pageFooterNextButton" onclick="saveInfo()">Save and Continue</button>`;
+  if (state.step === 'exp') app.innerHTML = `<div data-automation-id="formField-resume"><label for="up">Upload a file (5MB max)*</label><input id="up" type="file" data-automation-id="file-upload-input-ref" style="display:none"></div>
+    <button data-automation-id="pageFooterNextButton" onclick="saveExp()">Save and Continue</button>`;
+  if (state.step === 'questions') app.innerHTML = `<div data-automation-id="formField-q1"><label id="q1l">Are you legally eligible to work in Canada?*</label><button aria-haspopup="listbox" aria-labelledby="q1l" id="q1" onclick="openList(this, ['Yes','No'])">Select One</button></div>
+    <div data-automation-id="formField-q2"><label id="q2l">Do you have a valid driver's licence?*</label><button aria-haspopup="listbox" aria-labelledby="q2l" id="q2" onclick="openList(this, ['Yes','No'])">Select One</button></div>
+    <button data-automation-id="pageFooterNextButton" onclick="saveQ()">Save and Continue</button>`;
+  if (state.step === 'review') app.innerHTML = `<h2>Review</h2><button data-automation-id="pageFooterNextButton" onclick="state.step='done';render();">Submit</button>`;
+  if (state.step === 'done') app.innerHTML = `<h2>Application Submitted</h2><p>Thank you for applying. Your application has been submitted.</p>`;
+}
+function openList(button, options){
+  document.querySelectorAll('[role=listbox]').forEach(e => e.remove());
+  const list = document.createElement('ul'); list.setAttribute('role','listbox');
+  for (const o of options) { const li = document.createElement('li'); li.setAttribute('role','option'); li.setAttribute('data-automation-id','promptOption'); li.innerText = o; li.onclick = () => { button.innerText = o; state.data[button.id] = o; list.remove(); }; list.append(li); }
+  button.after(list);
+}
+function fail(message){ document.getElementById('err').innerHTML = `<div data-automation-id="errorMessage" role="alert">${message}</div>`; }
+function signIn(){
+  state.attempts++;
+  if (document.getElementById('hp').value) return fail('Bot detected');
+  const email = document.getElementById('e').value, password = document.getElementById('p').value;
+  if (accounts[email] !== password) return fail('Wrong email address or password.');
+  if (!state.verified) { state.step = 'verify'; return render(); }
+  state.signedIn = true; enterSite();
+}
+function createAccount(){
+  const email = document.getElementById('e').value, password = document.getElementById('p').value;
+  if (password !== document.getElementById('v').value) return fail('Passwords do not match.');
+  if (!document.getElementById('c').checked) return fail('You must accept the terms and conditions.');
+  if (accounts[email]) return fail('An account using this email address already exists.');
+  accounts[email] = password; state.created = email; state.consent = true;
+  if (!state.verified) { state.step = 'verify'; return render(); }
+  state.signedIn = true; enterSite();
+}
+window.verifyEmail = () => { state.verified = true; state.step = 'signin'; render(); };
+function saveInfo(){ state.data.first = fn.value; state.data.ext = px.value; state.data.pref = pref.checked; state.data.last = ln.value; state.data.phone = pn.value; state.data.prev = document.querySelector('input[name=pw]:checked')?.value; if (!state.data.country || !fn.value) return; state.step='exp'; render(); }
+function saveExp(){ state.data.resume = up.files[0]?.name; if (!state.data.resume) return; state.step='questions'; render(); }
+function saveQ(){ if (!state.data.q1 || !state.data.q2) return; state.step='review'; render(); }
+window.wd = state; render();
+</script></body></html>

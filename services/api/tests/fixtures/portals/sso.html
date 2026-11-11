@@ -1,0 +1,18 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Candidate Sign In</title></head><body><div id="app"></div>
+<script>
+const state = window.sso = {step: 'email', email: null, password: null, data: null};
+function render() {
+  const app = document.getElementById('app');
+  if (state.step === 'email') app.innerHTML = `<h1>Sign in to apply</h1><button>Continue with Google</button><button>Sign in with LinkedIn</button>
+    <form onsubmit="event.preventDefault(); state.email = document.getElementById('e').value; state.step = 'password'; setTimeout(render, 400);">
+    <label for="e">Email address</label><input id="e" type="email"><button type="submit">Continue</button></form>`;
+  if (state.step === 'password') app.innerHTML = `<h1>Enter your password</h1><p>${state.email}</p>
+    <form onsubmit="event.preventDefault(); state.password = document.getElementById('pw').value; state.step = 'loading'; render(); setTimeout(() => { state.step = 'form'; render(); }, 1200);">
+    <label for="pw">Password</label><input id="pw" type="password"><button type="submit">Sign in</button></form>`;
+  if (state.step === 'loading') app.innerHTML = `<div class="spinner" style="width:40px;height:40px;background:#ccc">Loading…</div>`;
+  if (state.step === 'form') app.innerHTML = `<h1>Application</h1><form onsubmit="event.preventDefault(); state.data = {first: document.getElementById('f').value, last: document.getElementById('l').value}; state.step = 'done'; render();">
+    <label for="f">First name*</label><input id="f" required><label for="l">Last name*</label><input id="l" required><button type="submit">Submit application</button></form>`;
+  if (state.step === 'done') app.innerHTML = `<h2>Thank you for applying!</h2>`;
+}
+render();
+</script></body></html>

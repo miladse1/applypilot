@@ -1,0 +1,1 @@
+"""Browser-assisted job applications."""

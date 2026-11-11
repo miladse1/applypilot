@@ -1,0 +1,29 @@
+<!doctype html><html><head><title>Backend Engineer - Example Co</title><style>.hp{position:absolute;left:-9999px}</style></head><body>
+<h1>Backend Engineer</h1><p>Thank you for your interest in Example Co. We build things.</p>
+<button type="button" onclick="document.getElementById('app').scrollIntoView()">Apply</button>
+<form id="app" onsubmit="event.preventDefault(); submitApp();">
+  <label for="first_name">First Name<span>*</span></label><input id="first_name" required>
+  <label for="last_name">Last Name<span>*</span></label><input id="last_name" required>
+  <label for="email">Email<span>*</span></label><input id="email" type="text" required>
+  <label for="phone">Phone</label><input id="phone" type="tel">
+  <div><label for="resume">Resume/CV</label><input id="resume" type="file" required style="display:none"><button type="button">Attach</button></div>
+  <label for="q1">LinkedIn Profile</label><input id="q1">
+  <label for="q2">Will you now or in the future require sponsorship for a visa?*</label>
+  <select id="q2" required><option value="">Select...</option><option>Yes</option><option>No</option></select>
+  <label for="q3">Have you previously worked at or consulted for Example Co?*</label>
+  <select id="q3" required><option value="">Select...</option><option>Yes</option><option>No</option></select>
+  <label for="q4">Are you subject to any employment agreements or post-employment restrictions?*</label>
+  <select id="q4" required><option value="">Select...</option><option>Yes</option><option>No</option></select>
+  <label for="gender">Gender</label><select id="gender"><option value="">Select...</option><option>Male</option><option>Female</option><option>Decline To Self Identify</option></select>
+  <label for="website_hp" class="hp">Leave this field blank</label><input id="website_hp" name="website" class="hp">
+  <button type="submit">Submit application</button>
+</form>
+<script>
+function submitApp(){
+  const f = document.getElementById('resume').files;
+  window.submitted = {first: first_name.value, last: last_name.value, email: email.value, phone: phone.value, resume: f.length ? f[0].name : null, sponsor: q2.value, prev: q3.value, agreements: q4.value, gender: gender.value, honeypot: website_hp.value};
+  if (!f.length) { alert('resume required'); return; }
+  history.pushState({}, '', location.pathname.replace('greenhouse.html','') + 'confirmation');
+  document.body.innerHTML = '<h1>Thank you for applying.</h1><p>Your application has been received.</p>';
+}
+</script></body></html>

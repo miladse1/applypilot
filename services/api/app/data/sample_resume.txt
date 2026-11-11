@@ -1,0 +1,31 @@
+Jordan Lee
+jordan.lee@email.com | (415) 555-0198 | San Francisco, CA
+linkedin.com/in/jordanlee | github.com/jordanlee
+
+SUMMARY
+Software engineer who builds backend services and reporting tools.
+
+EXPERIENCE
+Software Engineer
+Northwind Labs — San Francisco, CA
+June 2022 - Present
+- Built REST APIs in Python and Java serving product search
+- Wrote SQL queries for reporting dashboards
+- Used Git for version control across the team repository
+
+EDUCATION
+B.S. Computer Science
+State University
+2018 - 2022
+Coursework: Algorithms, Databases
+
+SKILLS
+Python, Java, SQL, Git, REST APIs
+
+PROJECTS
+Campus Inventory
+- Built a web inventory tool for a student organization.
+Technologies: Python, SQL
+
+CERTIFICATIONS
+None listed

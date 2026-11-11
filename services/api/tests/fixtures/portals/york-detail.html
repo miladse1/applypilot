@@ -1,0 +1,30 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Experience York - Posting</title>
+<script>if (localStorage.getItem('york') !== 'in') location.replace('york-login.html');</script></head><body>
+<div id="app"></div>
+<script>
+const id = new URLSearchParams(location.search).get('p');
+const data = {
+  '101': ['Software Developer Co-op', 'Maple Analytics', 'Toronto, ON', 'Jan 15, 2027 11:59 PM', 'Through Experience York and the employer website', 'https://careers.maple.example/apply/101', 'Python, SQL, React, Git'],
+  '103': ['Data Engineering Intern', 'Northwind Bank', 'Toronto, ON', 'Jan 22, 2027', 'Through Experience York', '', 'Python, Airflow, Spark, SQL'],
+  '104': ['Machine Learning Co-op', 'Lakeshore AI', 'Remote', 'Feb 1, 2027', 'Employer Website', 'https://jobs.lakeshore.example/ml-coop', 'Python, PyTorch, pandas'],
+  '102': ['Marketing Assistant', 'Brightside Media', 'Toronto, ON', 'Jan 20, 2027', 'Through Experience York', '', 'Social media, writing'],
+  '105': ['Civil Engineering Co-op - Site Inspection', 'BuildRight Construction', 'Vaughan, ON', 'Feb 3, 2027', 'Through Experience York', '', 'AutoCAD'],
+}[id];
+const [title, org, loc, deadline, method, link, skills] = data;
+document.getElementById('app').innerHTML = `<h1>${title}</h1>
+<table><tbody>
+<tr><td><strong>Job ID:</strong></td><td>${id}</td></tr>
+<tr><td><strong>Job Title:</strong></td><td>${title}</td></tr>
+<tr><td><strong>Organization:</strong></td><td>${org}</td></tr>
+<tr><td><strong>Job Location:</strong></td><td>${loc}</td></tr>
+<tr><td><strong>Work Term:</strong></td><td>Winter 2027</td></tr>
+<tr><td><strong>Job Description:</strong></td><td>Join the ${org} team for a four-month co-op term. You will build and maintain internal tools, write tests, review code with senior engineers, and present your work to the team at the end of the term. You will work closely with product and analytics.</td></tr>
+<tr><td><strong>Job Requirements:</strong></td><td>Currently enrolled in a computing or engineering program. Experience with ${skills}. Strong communication and teamwork skills.</td></tr>
+<tr><td><strong>Application Deadline:</strong></td><td>${deadline}</td></tr>
+<tr><td><strong>Application Method:</strong></td><td>${method}</td></tr>
+${link ? `<tr><td><strong>If by Website, go to:</strong></td><td><a href="${link}">${link}</a></td></tr>` : ''}
+<tr><td><strong>Application Documents Required:</strong></td><td>Resume, Cover Letter, Unofficial Transcript</td></tr>
+</tbody></table>
+<button onclick="localStorage.setItem('york-applied', '${id}')">Apply</button>`;
+</script>
+</body></html>

@@ -1,0 +1,191 @@
+#!/bin/sh
+# ApplyPilot as a Mac app: production servers that start at login, plus a Control app.
+#
+#   ./applypilot install     start at login, add "ApplyPilot Control" to ~/Applications, start now
+#   ./applypilot uninstall   remove both (your data, resumes, and settings are untouched)
+#   ./applypilot start | stop | restart | status | open | logs
+#   ./applypilot dev         switch to development mode (hot reload via ./dev.sh)
+#   ./applypilot prod        switch back to production mode (rebuilds if the web code changed)
+#   ./applypilot build       rebuild the production web app now
+#
+# Private data and logs live in ~/Library/Application Support/ApplyPilot (outside this folder).
+# Production and ./dev.sh write the same logs there: logs/api.log and logs/web.log.
+set -u
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+. "$ROOT/mac/common.sh"
+URL="http://localhost:$WEB_PORT"
+CONTROL_APP="$HOME/Applications/ApplyPilot Control.app"
+CONTROL_ID="com.applypilot.control"
+CHROME_APP="$HOME/Applications/Chrome Apps.localized/ApplyPilot.app"
+
+say() { printf '%s\n' "$*"; }
+
+write_agent() { # label script logname
+  cat > "$AGENTS_DIR/$1.plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>$1</string>
+  <key>ProgramArguments</key>
+  <array><string>/bin/sh</string><string>$ROOT/mac/$2</string></array>
+  <key>WorkingDirectory</key><string>$ROOT</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>$(dirname "$(command -v node)"):/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>APPLYPILOT_HOME</key><string>$APPLYPILOT_HOME</string>
+  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>ThrottleInterval</key><integer>10</integer>
+  <key>ProcessType</key><string>Interactive</string>
+  <key>AssociatedBundleIdentifiers</key><string>$CONTROL_ID</string>
+  <key>StandardOutPath</key><string>$LOGS/launchd-$3.log</string>
+  <key>StandardErrorPath</key><string>$LOGS/launchd-$3.log</string>
+</dict>
+</plist>
+PLIST
+  plutil -lint "$AGENTS_DIR/$1.plist" >/dev/null || { say "Could not write $AGENTS_DIR/$1.plist" >&2; exit 1; }
+}
+
+installed() { [ -f "$AGENTS_DIR/$LABEL_API.plist" ] && [ -f "$AGENTS_DIR/$LABEL_WEB.plist" ]; }
+require_installed() { installed || { say "ApplyPilot is not installed as an app yet. Run: ./applypilot install" >&2; exit 1; }; }
+
+api_ok() { curl -s -m 3 "http://127.0.0.1:$API_PORT/api/v1/health" | grep -q '"integrations"'; }
+web_ok() { [ "$(curl -s -m 5 -o /dev/null -w '%{http_code}' "$URL/login")" = "200" ] && curl -s -m 5 "$URL/api/v1/health" | grep -q '"integrations"'; }
+
+wait_healthy() {
+  # A first start after code changes includes a web build, so allow a few minutes.
+  for _ in $(seq 1 180); do
+    api_ok && web_ok && return 0
+    sleep 1
+  done
+  say "ApplyPilot did not become ready. See $LOGS/api.log and $LOGS/web.log." >&2
+  return 1
+}
+
+stop_dev_servers() {
+  # Only ApplyPilot's own processes (working directory inside this folder) are stopped.
+  agents_loaded && return 0
+  stop_port "$API_PORT" && stop_port "$WEB_PORT"
+}
+
+start() {
+  require_installed
+  stop_dev_servers || exit 1
+  if web_build_stale; then
+    say "The web code changed since the last build. Building (about 15 seconds)…"
+    "$ROOT/mac/build-web.sh" >>"$LOGS/web.log" 2>&1 || say "The build failed (see $LOGS/web.log). Using the previous build." >&2
+  fi
+  for label in "$LABEL_API" "$LABEL_WEB"; do
+    agent_loaded "$label" || launchctl bootstrap "$DOMAIN" "$AGENTS_DIR/$label.plist"
+  done
+  wait_healthy && say "ApplyPilot is running in production mode: $URL"
+}
+
+restart() {
+  require_installed
+  if ! agents_loaded; then start; return; fi
+  if web_build_stale; then
+    say "The web code changed since the last build. Building (about 15 seconds)…"
+    "$ROOT/mac/build-web.sh" >>"$LOGS/web.log" 2>&1 || say "The build failed (see $LOGS/web.log). Using the previous build." >&2
+  fi
+  launchctl kickstart -k "$DOMAIN/$LABEL_API"
+  launchctl kickstart -k "$DOMAIN/$LABEL_WEB"
+  sleep 1
+  wait_healthy && say "ApplyPilot restarted: $URL"
+}
+
+mode() {
+  if agents_loaded; then echo production
+  elif [ -n "$(port_pid "$API_PORT")$(port_pid "$WEB_PORT")" ]; then echo development
+  else echo stopped
+  fi
+}
+
+status() {
+  current="$(mode)"
+  if [ "${1:-}" = "--short" ]; then
+    case "$current" in
+      production) if api_ok && web_ok; then say "Running (production mode) at $URL"; else say "Starting or not responding (production mode)"; fi ;;
+      development) say "Running in development mode (./dev.sh) at $URL" ;;
+      *) say "Stopped" ;;
+    esac
+    return
+  fi
+  say "Mode: $current"
+  say "Starts at login: $(installed && echo yes || echo no)"
+  say "API ($API_PORT): $(api_ok && echo ok || echo 'not responding')"
+  say "Web ($WEB_PORT): $(web_ok && echo ok || echo 'not responding')"
+  [ -d "$CHROME_APP" ] && say "Chrome app: installed" || say "Chrome app: not installed (open $URL in Chrome, then ⋮ → Cast, save, and share → Install page as app)"
+  say "Data: $APPLYPILOT_HOME"
+  say "Logs: $LOGS"
+}
+
+open_app() {
+  case "$(mode)" in
+    stopped) installed && start >/dev/null || { say "ApplyPilot is stopped. Start it with: ./applypilot start" >&2; exit 1; } ;;
+  esac
+  if [ -d "$CHROME_APP" ]; then
+    open "$CHROME_APP"
+  elif [ -d "/Applications/Google Chrome.app" ]; then
+    open -na "Google Chrome" --args --app="$URL"
+  else
+    open "$URL"
+  fi
+}
+
+install_control_app() {
+  mkdir -p "$HOME/Applications"
+  tmp="$(mktemp -d)"
+  sed "s#__APPLYPILOT__#$ROOT/applypilot#g" "$ROOT/mac/ApplyPilot Control.applescript" > "$tmp/control.applescript"
+  rm -rf "$CONTROL_APP"
+  osacompile -o "$CONTROL_APP" "$tmp/control.applescript" || exit 1
+  cp "$ROOT/mac/icons/ApplyPilotControl.icns" "$CONTROL_APP/Contents/Resources/applet.icns"
+  plutil -replace CFBundleIdentifier -string "$CONTROL_ID" "$CONTROL_APP/Contents/Info.plist"
+  plutil -replace CFBundleName -string "ApplyPilot Control" "$CONTROL_APP/Contents/Info.plist"
+  codesign --force --deep -s - "$CONTROL_APP" >/dev/null 2>&1
+  touch "$CONTROL_APP"
+  rm -rf "$tmp"
+}
+
+install() {
+  [ -x "$API/.venv/bin/uvicorn" ] && [ -d "$WEB/node_modules" ] || { say "Run ./dev.sh once first to install dependencies." >&2; exit 1; }
+  command -v node >/dev/null || { say "Node.js was not found." >&2; exit 1; }
+  mkdir -p "$AGENTS_DIR"
+  stop_agents
+  write_agent "$LABEL_API" run-api.sh api
+  write_agent "$LABEL_WEB" run-web.sh web
+  install_control_app
+  say "Added ApplyPilot Control to ~/Applications."
+  start
+}
+
+uninstall() {
+  stop_agents
+  rm -f "$AGENTS_DIR/$LABEL_API.plist" "$AGENTS_DIR/$LABEL_WEB.plist"
+  rm -rf "$CONTROL_APP"
+  say "Removed auto-start and ApplyPilot Control. Your data is untouched. ./dev.sh still works."
+}
+
+case "${1:-status}" in
+  install) install ;;
+  uninstall) uninstall ;;
+  start | prod | production) start ;;
+  stop)
+    stop_agents
+    stop_dev_servers >/dev/null 2>&1
+    say "ApplyPilot stopped. It starts again at your next login, or with ./applypilot start." ;;
+  restart) restart ;;
+  status) status "${2:-}" ;;
+  open) open_app ;;
+  dev | development)
+    stop_agents
+    say "Production services paused until the next login (or ./applypilot prod)."
+    exec "$ROOT/dev.sh" ;;
+  build) "$ROOT/mac/build-web.sh" && { agents_loaded && launchctl kickstart -k "$DOMAIN/$LABEL_WEB" && wait_healthy; say "Build finished."; } ;;
+  logs)
+    if [ "${2:-}" = "--open" ]; then open -a Console "$LOGS/api.log" "$LOGS/web.log"; else tail -n 40 "$LOGS/api.log" "$LOGS/web.log"; fi ;;
+  -h | --help | help) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//' ;;
+  *) say "Unknown command: $1" >&2; sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 1 ;;
+esac

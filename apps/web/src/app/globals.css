@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #f2f4f7;
+  --line: #e4e7ec;
+  --ink: #101828;
+  --muted: #5b6474;
+  --faint: #98a2b3;
+  --accent: #4f46e5;
+  --accent-ink: #ffffff;
+  --accent-soft: #eef0ff;
+  --success: #067647;
+  --success-soft: #e7f6ee;
+  --warn: #b54708;
+  --warn-soft: #fef4e6;
+  --danger: #b42318;
+  --danger-soft: #fdeceb;
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #0c0e13;
+  --surface: #13161d;
+  --surface-2: #1a1e27;
+  --line: #262b36;
+  --ink: #e8eaef;
+  --muted: #a0a8b8;
+  --faint: #6b7385;
+  --accent: #8b8cf8;
+  --accent-ink: #0c0e13;
+  --accent-soft: #1f2140;
+  --success: #47cd89;
+  --success-soft: #0f2a1d;
+  --warn: #fdb022;
+  --warn-soft: #2e2210;
+  --danger: #f97066;
+  --danger-soft: #331715;
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+* {
+  border-color: var(--line);
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+.prose-text p + p {
+  margin-top: 0.6rem;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 999px;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-fade-in {
+  animation: fade-in 160ms ease-out;
+}
