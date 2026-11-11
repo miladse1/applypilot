@@ -16,6 +16,6 @@ pillow>=13.0.0,<14  # via reportlab and pymupdf; 13.0 fixes known image-decoder 
 psycopg[binary]>=3.2.3,<4
 pytest>=8.3.4,<10
 pymupdf>=1.26.0,<2
-anthropic>=1.13.0,<2
+anthropic>=2.6.0,<3
 playwright>=1.49,<2  # browser-assisted applications; drives the installed Google Chrome
 keyring>=25,<26  # job-site password in the macOS Keychain
