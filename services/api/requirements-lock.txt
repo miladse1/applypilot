@@ -10,7 +10,7 @@ anyio==4.15.1
 certifi==2026.10.23
 charset-normalizer==3.5.2
 click==8.5.0
-dnspython==2.9.0
+dnspython==2.9.2
 docstring_parser==0.18.0
 email-validator==2.3.0
 fastapi==0.143.0
